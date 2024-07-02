@@ -1,6 +1,6 @@
 // ignore: file_names
-import 'package:digitaleventhub/pages/home.dart';
-import 'package:digitaleventhub/pages/Register.dart';
+import 'package:digitalevent/pages/home.dart';
+import 'package:digitalevent/pages/Register.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
