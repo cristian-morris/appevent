@@ -1,3 +1,5 @@
+import 'package:digitalevent/components/config.dart';
+import 'package:digitalevent/components/historial_eventos.dart';
 import 'package:digitalevent/components/notificaciones.dart';
 import 'package:digitalevent/components/perfil.dart';
 import 'package:flutter/material.dart';
@@ -72,6 +74,26 @@ class _HomeState extends State<Home> {
                     ),
                     onTap: () {
                       Navigator.of(context).push(MaterialPageRoute(builder: (context) => Notificaciones(),));
+                    },
+                ),
+                  ListTile(
+                  leading: Icon(Icons.history),
+                  title: Text(
+                    "Historial de eventos",
+                    style: TextStyle(fontSize: 20),
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => HistorialEventos(),));
+                    },
+                ),
+                  ListTile(
+                  leading: Icon(Icons.settings),
+                  title: Text(
+                    "Configuracion",
+                    style: TextStyle(fontSize: 20),
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => Config(),));
                     },
                 )
             ],
