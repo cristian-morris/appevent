@@ -1,4 +1,3 @@
-import 'package:digitalevent/pages/home.dart';
 import 'package:digitalevent/pages/login.dart';
 import 'package:flutter/material.dart';
 
@@ -15,7 +14,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
-      home: Home(),
+      home: Login(),
     );
   }
 }
