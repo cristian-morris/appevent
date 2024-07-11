@@ -93,6 +93,17 @@ class _NotificacionesState extends State<Notificaciones> {
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 3,
                               ),
+                              const SizedBox(
+                                height: 5,
+                              ),
+                              Text(
+                                textAlign: TextAlign.right,
+                                notifications[index].fecha,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              )
                             ],
                           ),
                         ),

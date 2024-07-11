@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'notificacion.dart'; // Asegúrate de tener la clase Notificacion en un archivo separado o en el mismo archivo
 
 Future<List<Notificacion>> fetchNotificaciones() async {
-  final url = Uri.parse('http://192.168.1.122:3000/api/notifications/getAll');
+  final url = Uri.parse('http://169.254.80.3:3000/api/notifications/getAll');
   print('Fetching notifications from $url');
 
   try {
