@@ -1,4 +1,6 @@
+import 'package:digitalevent/models/evento.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -8,41 +10,230 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   bool showFilters = false;
   String? selectedCategory;
-  TimeOfDay? selectedTime;
   DateTime? selectedDate;
   String? selectedLocation;
-  String? selectedPriceRange;
+  List<Evento> eventos = [];
+  List<Evento> filteredEventos = [];
 
   final List<String> categories = [
-    'Cumpleaños',
+    'Conferencia',
     'Feria',
-    'Curso',
-    'Conferencia'
-  ];
-  final List<TimeOfDay> times = [
-    TimeOfDay(hour: 12, minute: 0),
-    TimeOfDay(hour: 17, minute: 0),
-    TimeOfDay(hour: 19, minute: 0),
-    TimeOfDay(hour: 21, minute: 0)
-  ];
-  final List<String> dates = ['2024-07-01', '2024-07-02', '2024-07-03'];
-  final List<String> locations = [
-    'Nueva York',
-    'Los Ángeles',
-    'Chicago',
-    'Houston'
-  ];
-  final List<String> priceRanges = [
-    'Gratis',
-    '\$1-\$50',
-    '\$51-\$100',
-    'Más de \$100'
+    'Taller',
+    'Tecnología',
+    'Literatura',
+    'Música'
   ];
 
-  void toggleFilters() {
-    setState(() {
-      showFilters = !showFilters;
+  @override
+  void initState() {
+    super.initState();
+    fetchEvento().then((data) {
+      setState(() {
+        eventos = data;
+        filteredEventos = data;
+      });
     });
+  }
+
+  void toggleFilters() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return FractionallySizedBox(
+          heightFactor: 0.9,
+          child: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setModalState) {
+              return Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Filtrar eventos',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+                    Text('Categorías',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    Wrap(
+                      spacing: 8.0,
+                      children: categories.map((category) {
+                        return ChoiceChip(
+                          label: Text(category),
+                          selected: selectedCategory == category,
+                          selectedColor: Colors.purpleAccent,
+                          onSelected: (selected) {
+                            setModalState(() {
+                              selectedCategory = selected ? category : null;
+                            });
+                            setState(() {
+                              applyFilters();
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    SizedBox(height: 10),
+                    Text('Fechas',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    Wrap(
+                      spacing: 8.0,
+                      children: eventos.map((evento) {
+                        final dateString = formatDate(evento.fechaInicio);
+                        return ChoiceChip(
+                          label: Text(dateString),
+                          selected: selectedDate?.toString().split(' ')[0] ==
+                              dateString,
+                          selectedColor: Colors.purpleAccent,
+                          onSelected: (selected) {
+                            setModalState(() {
+                              selectedDate =
+                                  selected ? evento.fechaInicio : null;
+                            });
+                            setState(() {
+                              applyFilters();
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    SizedBox(height: 10),
+                    Text('Ubicaciones',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    Wrap(
+                      spacing: 8.0,
+                      children: eventos.map((evento) {
+                        return ChoiceChip(
+                          label: Text(evento.ubicacion),
+                          selected: selectedLocation == evento.ubicacion,
+                          selectedColor: Colors.purpleAccent,
+                          onSelected: (selected) {
+                            setModalState(() {
+                              selectedLocation =
+                                  selected ? evento.ubicacion : null;
+                            });
+                            setState(() {
+                              applyFilters();
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: Text('Aplicar filtros'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  void applyFilters() {
+    setState(() {
+      filteredEventos = eventos.where((evento) {
+        final matchesCategory = selectedCategory == null ||
+            evento.categoriaNombre == selectedCategory;
+        final matchesDate = selectedDate == null ||
+            evento.fechaInicio.isAtSameMomentAs(selectedDate!);
+        final matchesLocation =
+            selectedLocation == null || evento.ubicacion == selectedLocation;
+        return matchesCategory && matchesDate && matchesLocation;
+      }).toList();
+    });
+  }
+
+  String formatDate(DateTime date) {
+    return DateFormat('yyyy-MM-dd').format(date);
+  }
+
+  Widget buildEventCard(Evento evento) {
+    return Card(
+      elevation: 12,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+        side: const BorderSide(
+          color: Color.fromRGBO(186, 104, 200, 1),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Image.network(
+              evento.imagenUrl,
+              height: 150,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+            SizedBox(height: 10),
+            Text(
+              evento.nombre,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 5),
+            if (evento.categoriaNombre == 'Gratis')
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.green,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Text(
+                  'Gratis',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            if (evento.tipoEvento == 'Privado' &&
+                evento.categoriaNombre != 'Gratis')
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Text(
+                  'Privado',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            SizedBox(height: 5),
+            // Text('Categoría: ${evento.categoriaNombre}'),
+            Text('Fecha: ${formatDate(evento.fechaInicio)}'),
+            Text('Ubicación: ${evento.ubicacion}'),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -54,15 +245,25 @@ class _SearchScreenState extends State<SearchScreen> {
             Expanded(
               child: TextField(
                 decoration: InputDecoration(
-                    hintText: 'Buscar...',
-                    prefixIcon: Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(
-                        color: Colors.deepPurple,
-                      ),
+                  hintText: 'Buscar...',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: Colors.deepPurple,
                     ),
-                    contentPadding: EdgeInsets.all(0)),
+                  ),
+                  contentPadding: EdgeInsets.all(0),
+                ),
+                onChanged: (query) {
+                  setState(() {
+                    filteredEventos = eventos.where((evento) {
+                      return evento.nombre
+                          .toLowerCase()
+                          .contains(query.toLowerCase());
+                    }).toList();
+                  });
+                },
               ),
             ),
           ],
@@ -86,45 +287,7 @@ class _SearchScreenState extends State<SearchScreen> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          child: showFilters
-                              ? Row(
-                                  children: [
-                                    Text('Filtrar'),
-                                    SizedBox(width: 8),
-                                    Icon(Icons.close),
-                                  ],
-                                )
-                              : Text('Filtrar'),
-                        ),
-                        SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(0),
-                            ),
-                          ),
-                          child: Text('Botón 1'),
-                        ),
-                        SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(0),
-                            ),
-                          ),
-                          child: Text('Botón 2'),
-                        ),
-                        SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(0),
-                            ),
-                          ),
-                          child: Text('Botón 3'),
+                          child: Text('Filtrar'),
                         ),
                       ],
                     ),
@@ -132,108 +295,14 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ],
             ),
-            if (showFilters)
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      SizedBox(height: 10),
-                      Text('Categorías',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      Wrap(
-                        spacing: 8.0,
-                        children: categories.map((category) {
-                          return ChoiceChip(
-                            label: Text(category),
-                            selected: selectedCategory == category,
-                            selectedColor: Colors.purpleAccent,
-                            onSelected: (selected) {
-                              setState(() {
-                                selectedCategory = selected ? category : null;
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
-                      SizedBox(height: 10),
-                      Text('Horas',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      Wrap(
-                        spacing: 8.0,
-                        children: times.map((time) {
-                          return ChoiceChip(
-                            label: Text('${time.format(context)}'),
-                            selected: selectedTime == time,
-                            selectedColor: Colors.purpleAccent,
-                            onSelected: (selected) {
-                              setState(() {
-                                selectedTime = selected ? time : null;
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
-                      SizedBox(height: 10),
-                      Text('Fechas',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      Wrap(
-                        spacing: 8.0,
-                        children: dates.map((date) {
-                          return ChoiceChip(
-                            label: Text(date),
-                            selected:
-                                selectedDate?.toString().split(' ')[0] == date,
-                            selectedColor: Colors.purpleAccent,
-                            onSelected: (selected) {
-                              setState(() {
-                                selectedDate =
-                                    selected ? DateTime.parse(date) : null;
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
-                      SizedBox(height: 10),
-                      Text('Ubicaciones',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      Wrap(
-                        spacing: 8.0,
-                        children: locations.map((location) {
-                          return ChoiceChip(
-                            label: Text(location),
-                            selected: selectedLocation == location,
-                            selectedColor: Colors.purpleAccent,
-                            onSelected: (selected) {
-                              setState(() {
-                                selectedLocation = selected ? location : null;
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
-                      SizedBox(height: 10),
-                      Text('Rango de Precios',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      Wrap(
-                        spacing: 8.0,
-                        children: priceRanges.map((priceRange) {
-                          return ChoiceChip(
-                            label: Text(priceRange),
-                            selected: selectedPriceRange == priceRange,
-                            selectedColor: Colors.purpleAccent,
-                            onSelected: (selected) {
-                              setState(() {
-                                selectedPriceRange =
-                                    selected ? priceRange : null;
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                  ),
-                ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: filteredEventos.length,
+                itemBuilder: (context, index) {
+                  return buildEventCard(filteredEventos[index]);
+                },
               ),
+            ),
           ],
         ),
       ),
